@@ -6,6 +6,11 @@ terminal_pids = []
 terminal_positions = [(0, 0), (0, 400), (0, 800), (800, 0), (800, 400),
                       (800, 800)]  # Define terminal window positions
 
+
+def clear_screen():
+    subprocess.run('clear', shell=True)
+
+
 def get_screen_resolution():
     try:
         output = subprocess.check_output("xdpyinfo | grep dimensions", shell=True, text=True)
@@ -15,6 +20,7 @@ def get_screen_resolution():
         print(f"Error getting screen resolution: {e}")
         print("Using default resolution: 1920x1080")
         return 1920, 1080
+
 
 def popen_command_new_terminal(command):
     screen_width, screen_height = get_screen_resolution()
@@ -37,17 +43,12 @@ def popen_command_new_terminal(command):
             terminal_command = f"{terminal} -e /bin/sh -c '{command}; exec bash'"
         elif terminal == 'xfce4-terminal':
             terminal_command = f"{terminal} --geometry=80x24+{x}+{y} -e '/bin/sh -c \"{command}; exec bash\"'"
-        else:
-            continue
 
         try:
-            print(f"Attempting to execute: {terminal_command}")
-            process = subprocess.Popen(terminal_command, shell=True, preexec_fn=os.setsid)
-            terminal_pids.append(process.pid)
-            return process
+           subprocess.Popen(terminal_command + " &", shell=True, start_new_session=True)
+
         except Exception as e:
             print(f"Failed to start {terminal}: {e}. Trying the next terminal...\n")
 
-    # Fallback if none of the terminals are available
-    print("No suitable terminal found.")
-    return None
+def test(command):
+    subprocess.Popen(command, shell=True, start_new_session=True)
