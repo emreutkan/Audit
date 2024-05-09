@@ -21,6 +21,7 @@ def popen_command_new_terminal(command):
     terminal_width = screen_width // 2
     terminal_height = screen_height // 3
 
+
     for terminal in terminals:
         if not terminal_positions:
             print("No more positions available for new terminals.")
@@ -40,14 +41,11 @@ def popen_command_new_terminal(command):
         else:
             continue
 
+
         try:
-            print(f"Attempting to execute: {terminal_command}")
-            process = subprocess.Popen(terminal_command, shell=True, preexec_fn=os.setsid)
-            terminal_pids.append(process.pid)
+            with open('/dev/null', 'w') as devnull:
+                process = subprocess.Popen(terminal_command, shell=True, preexec_fn=os.setsid, stdout=devnull, stderr=devnull)
+                terminal_pids.append(process.pid)
             return process
         except Exception as e:
             print(f"Failed to start {terminal}: {e}. Trying the next terminal...\n")
-
-    # Fallback if none of the terminals are available
-    print("No suitable terminal found.")
-    return None
