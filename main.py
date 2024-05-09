@@ -1,15 +1,15 @@
 from enumeration.nmap import nmap
-from terminal_management.tman import popen_command_new_terminal,clear_screen,test
-import keyboard
-from pynput.keyboard import Key, Controller
+from terminal_management.tman import popen_command_new_terminal,clear_screen
 def main():
     while True:
-        clear_screen()
+        ##clear_screen()
         options = [
            """
+           Enumeration Options:
            1. Nmap
            2. Custom Nmap
-           3.
+           Bruteforce Options:
+           3. Hydra
            """
         ]
         print(options[0])
@@ -19,10 +19,14 @@ def main():
         elif choice == '2':
            custom_nmap = popen_command_new_terminal('sudo python3 enumeration/custom_nmap.py')
         elif choice == '3':
-            test = popen_command_new_terminal('sudo python3 enumeration/custom_nmap.py')
+              hydra = popen_command_new_terminal('hydra')
 
-        keyboard.press(Key.enter)
-        keyboard.release(Key.enter)
+
+
+
+
+
+
 
 
 
