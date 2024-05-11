@@ -6,6 +6,12 @@ terminal_pids = []
 terminal_positions = [(0, 0), (0, 400), (0, 800), (800, 0), (800, 400),
                       (800, 800)]  # Define terminal window positions
 
+def clear():
+    if os.name == 'nt':
+        _ = os.system('cls')
+    else:
+        _ = os.system('clear')
+
 def get_screen_resolution():
     try:
         output = subprocess.check_output("xdpyinfo | grep dimensions", shell=True, text=True)

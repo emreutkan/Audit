@@ -5,6 +5,8 @@ import termios
 from colorama import Fore, Style
 import subprocess
 
+from terminal_management.tman import clear
+
 TARGET_IP = os.popen('hostname -I').read().split()[0]
 VERBOSE = False
 VULN_SCAN = False
@@ -85,8 +87,7 @@ def select_interface():
                                 stderr=subprocess.PIPE, text=True)
     print(interfaces.stdout.split())
     interface = input("Enter the interface: ")
-    os.system('clear' if os.name != 'nt' else 'cls')
-
+    clear()
     if interface not in interfaces.stdout.split():
         print("Invalid interface")
         select_interface()
@@ -269,8 +270,7 @@ def make_command():
 
 
 def display_interface():
-    os.system('clear' if os.name != 'nt' else 'cls')
-
+    clear()
     # Creating a list of all options
     options = [
         ("I) Target IP", f"{Fore.BLUE}{TARGET_IP}{Style.RESET_ALL}"),
@@ -349,7 +349,7 @@ def run_nmap():
 def custom_nmap():
     while True:
         display_interface()
-        print("\n> ")
+
         option = getch().upper()
         if option == "Q":
             return

@@ -5,9 +5,20 @@ import termios
 from colorama import Fore, Style
 import subprocess
 
-from terminal_management.tman import popen_command_new_terminal
+sys.path.append("..")
+from terminal_management.tman import clear
+
 
 TARGET_IP = os.popen('hostname -I').read().split()[0]
+TARGET_PORT = 0
+PN_FLAG = False
+
+def set_pn_flag():
+    """
+    Set the -Pn flag
+    """
+    global PN_FLAG
+    PN_FLAG = not PN_FLAG
 
 def validate_ip(target):
     """
@@ -22,20 +33,37 @@ def validate_ip(target):
         if not 0 <= int(part) <= 255:
             return False
     return True
-def select_target():
-    """
-    Prompt the user to select a target to scan
 
-    :return: the target IP address
+
+def set_target_ip():
+    """
+    Set the target IP address
     """
     global TARGET_IP
+    print(f"{Fore.RED}Current target IP address: {TARGET_IP}{Style.RESET_ALL}")
     target = input("Enter the target IP address: ")
     if validate_ip(target):
         TARGET_IP = target
-        return TARGET_IP
     else:
-        print("Invalid IP address")
-        select_target()
+        print(f"{Fore.RED}Invalid IP address{Style.RESET_ALL}")
+
+def set_port():
+    """
+    Set the port range for the scan
+    """
+    global TARGET_PORT
+    port_range = input("Enter the port or port range (e.g. 1-1000): ")
+    try:
+        if 1 <= int(port_range) <= 65535:
+            TARGET_PORT = port_range
+    except ValueError:
+        if (not 0 <= int(port_range.split("-")[0]) <= 65535
+                or not 0 <= int(port_range.split("-")[1]) <= 65535
+                and int(port_range.split("-")[0]) < int(port_range.split("-")[1])):
+            print("Invalid port range")
+            set_pn_flag()
+        else:
+            TARGET_PORT = port_range
 
 def getch():
     """Gets a single character from standard input, does not echo to the screen."""
@@ -48,9 +76,11 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+
 def run_nmap(command):
+    if PN_FLAG:
+        command += " -Pn"
     command += f" {TARGET_IP}"
-    print(f"Running command: {command}")
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     while True:
         output = process.stdout.readline()
@@ -61,7 +91,7 @@ def run_nmap(command):
     rc = process.poll()
     return rc
 
-def nmap():
+def Comprehensive_Scan():
     """
     Comprehensive Scan for All Vulnerabilities on All Ports
     nmap -p- -sV -sC -T4 --script=vuln --open --min-rate 100 -v <target>
@@ -74,65 +104,113 @@ def nmap():
     --open: Shows only open ports.
     --min-rate 100: Sends packets at a minimum rate of 100 packets per second.
     -v: Increases verbosity.
+    """
+    if TARGET_PORT == 0:
+        command = "nmap -p- -sV -sC -T4 --script=vuln --open --min-rate 100 -v"
+    else:
+        command = f"nmap -p {TARGET_PORT} -sV -sC -T4 --script=vuln --open --min-rate 100 -v"
+    run_nmap(command)
 
-     2. Fast Comprehensive Scan
-     nmap -p- -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4
+def Fast_Comprehensive_Scan():
+    """
+    Fast Comprehensive Scan
+    nmap -p- -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4
 
     --min-rate 1000: Sends packets at a minimum rate of 1000 packets per second, speeding up the scan.
     --max-retries 1: Reduces the number of retries for each port.
     --host-timeout 15m: Limits the time spent scanning a single target to 15 minutes.
+    """
+    if TARGET_PORT == 0:
+        command = "nmap -p- -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4"
+    else:
+        command = f"nmap -p {TARGET_PORT} -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4"
+    run_nmap(command)
 
-    3. Stealthy Comprehensive Scan
+def stealthy_scan():
+    """
+    Stealthy Comprehensive Scan
     nmap -p- -sV -sS -T2 --script=vuln --open -v
 
     -sS: Conducts a SYN stealth scan, which is less likely to be logged.
     -T2: Uses a lower timing template to slow down the scan, making it less noticeable.
+    """
+    if TARGET_PORT == 0:
+        command = "nmap -p- -sV -sS -T2 --script=vuln --open -v"
+    else:
+        command = f"nmap -p {TARGET_PORT} -sV -sS -T2 --script=vuln --open -v"
+    run_nmap(command)
 
-    4. Fast and Stealthy Comprehensive Scan
+def fast_stealthy_scan():
+    """
+    Fast and Stealthy Comprehensive Scan
     nmap -p- -sV -sS --min-rate 500 --open --max-retries 1 --defeat-rst-ratelimit -T3
 
     --min-rate 500: Balances speed and stealth by sending packets at a moderate rate.
     --defeat-rst-ratelimit: Attempts to bypass restrictions that limit the number of reset packets.
     -T3: Balances speed and stealth more conservatively than -T4.
-    :return:
     """
+    if TARGET_PORT == 0:
+        command = "nmap -p- -sV -sS --min-rate 500 --open --max-retries 1 --defeat-rst-ratelimit -T3"
+    else:
+        command = f"nmap -p {TARGET_PORT} -sV -sS --min-rate 500 --open --max-retries 1 --defeat-rst-ratelimit -T3"
+    run_nmap(command)
+
+
+def interface():
+    # Define color schemes
+    command_color = Fore.BLUE + Style.BRIGHT
+    variable_color = Fore.RED
+    info_color = Fore.WHITE
+    separator_color = Fore.WHITE + Style.DIM
+    reset = Style.RESET_ALL
+
+    # Construct options string with colored output
+    options = [
+        f"""
+        {separator_color}--------------------------[ Configuration ]--------------------------{reset}
+        {command_color}S{reset}: Set target IP                        {info_color}Target IP = {variable_color}{TARGET_IP}{reset}
+        {command_color}P{reset}: Set target port (0 for all ports)    {info_color}Selected Ports = {variable_color}{'all ports' if TARGET_PORT == 0 else TARGET_PORT}{reset}
+        {command_color}N{reset}: Set -Pn flag                         {info_color}-Pn = {variable_color}{'True' if PN_FLAG else 'False'}{reset}
+        {separator_color}----------------------------------------------------------------------------{reset}
+        {command_color}0{reset}. Exit
+        {command_color}1{reset}. Comprehensive Scan
+        {command_color}2{reset}. Fast Comprehensive Scan
+        {command_color}3{reset}. Stealthy Scan
+        {command_color}4{reset}. Fast and Stealthy Scan
+        {separator_color}----------------------------------------------------------------------------{reset}
+        """
+    ]
+
+    print(options[0])
+def nmap():
     while True:
-        options = [
-            """
-            1. Comprehensive Scan for All Vulnerabilities on All Ports
-            
-                 nmap -p- -sV -sC -T4 --script=vuln --open --min-rate 100 -v
-                
-            2. Fast Comprehensive Scan
-                                
-                nmap -p- -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4
-                
-            3. Stealthy Comprehensive Scan
-
-                nmap -p- -sV -sS -T2 --script=vuln --open -v
-                
-            4. Fast and Stealthy Comprehensive Scan
-                
-                nmap -p- -sV -sS --min-rate 500 --open --max-retries 1 --defeat-rst-ratelimit -T3 
-
-            """
-        ]
-        print(options[0])
-        print("\n> ")
+        interface()
+        print('> ', end='', flush=True)
         option = getch().upper()
-        if option == '1':
-            popen_command_new_terminal("nmap -p- -sV -sC -T4 --script=vuln --open --min-rate 100 -v " + TARGET_IP)
+        clear()
+        if option == 'S':
+            set_target_ip()
+        elif option == 'P':
+            set_port()
+        elif option == 'N':
+            set_pn_flag()
+        elif option == '0':
+            exit()
+        elif option == '1':
+            Comprehensive_Scan()
         elif option == '2':
-            popen_command_new_terminal("nmap -p- -sV --min-rate 1000 --open --max-retries 1 --host-timeout 15m -T4 " + TARGET_IP)
+            Fast_Comprehensive_Scan()
         elif option == '3':
-            popen_command_new_terminal("nmap -p- -sV -sS -T2 --script=vuln --open -v " + TARGET_IP)
+            stealthy_scan()
         elif option == '4':
-            popen_command_new_terminal("nmap -p- -sV -sS --min-rate 500 --open --max-retries 1 --defeat-rst-ratelimit -T3 " + TARGET_IP)
+            fast_stealthy_scan()
         else:
             continue
 
+
 def main():
     nmap()
+
 
 if __name__ == "__main__":
     main()
