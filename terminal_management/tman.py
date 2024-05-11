@@ -6,11 +6,13 @@ terminal_pids = []
 terminal_positions = [(0, 0), (0, 400), (0, 800), (800, 0), (800, 400),
                       (800, 800)]  # Define terminal window positions
 
+
 def clear():
     if os.name == 'nt':
         _ = os.system('cls')
     else:
         _ = os.system('clear')
+
 
 def get_screen_resolution():
     try:
@@ -22,11 +24,11 @@ def get_screen_resolution():
         print("Using default resolution: 1920x1080")
         return 1920, 1080
 
+
 def popen_command_new_terminal(command):
     screen_width, screen_height = get_screen_resolution()
     terminal_width = screen_width // 2
     terminal_height = screen_height // 3
-
 
     for terminal in terminals:
         if not terminal_positions:
@@ -47,10 +49,10 @@ def popen_command_new_terminal(command):
         else:
             continue
 
-
         try:
             with open('/dev/null', 'w') as devnull:
-                process = subprocess.Popen(terminal_command, shell=True, preexec_fn=os.setsid, stdout=devnull, stderr=devnull)
+                process = subprocess.Popen(terminal_command, shell=True, preexec_fn=os.setsid, stdout=devnull,
+                                           stderr=devnull)
                 terminal_pids.append(process.pid)
             return process
         except Exception as e:

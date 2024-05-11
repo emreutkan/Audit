@@ -5,8 +5,9 @@ import termios
 from colorama import Fore, Style
 import subprocess
 
-sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from terminal_management.tman import clear
+from input_management.validations import validate_ip, validate_port, getch
 
 
 TARGET_IP = os.popen('hostname -I').read().split()[0]
@@ -20,21 +21,6 @@ def set_pn_flag():
     global PN_FLAG
     PN_FLAG = not PN_FLAG
 
-def validate_ip(target):
-    """
-    Check if the target IP address is valid
-
-    :param target: target IP address
-    """
-    parts = target.split(".")
-    if len(parts) != 4:
-        return False
-    for part in parts:
-        if not 0 <= int(part) <= 255:
-            return False
-    return True
-
-
 def set_target_ip():
     """
     Set the target IP address
@@ -47,23 +33,19 @@ def set_target_ip():
     else:
         print(f"{Fore.RED}Invalid IP address{Style.RESET_ALL}")
 
+
 def set_port():
     """
     Set the port range for the scan
     """
     global TARGET_PORT
-    port_range = input("Enter the port or port range (e.g. 1-1000): ")
-    try:
-        if 1 <= int(port_range) <= 65535:
-            TARGET_PORT = port_range
-    except ValueError:
-        if (not 0 <= int(port_range.split("-")[0]) <= 65535
-                or not 0 <= int(port_range.split("-")[1]) <= 65535
-                and int(port_range.split("-")[0]) < int(port_range.split("-")[1])):
-            print("Invalid port range")
-            set_pn_flag()
-        else:
-            TARGET_PORT = port_range
+    print("Enter the port or port range (e.g. 1-1000): ")
+    print("Type 0 to scan all ports")
+    port_range = input(" > ")
+    if validate_port(port_range):
+        TARGET_PORT = port_range
+    else:
+        print(f"{Fore.RED}Invalid port or port range{Style.RESET_ALL}")
 
 def getch():
     """Gets a single character from standard input, does not echo to the screen."""
@@ -89,7 +71,12 @@ def run_nmap(command):
         if output:
             print(output.strip())
     rc = process.poll()
-    return rc
+    if rc == 0:
+        print(f"{Fore.GREEN}Scan completed successfully{Style.RESET_ALL}")
+    elif rc == 1:
+        print(f"{Fore.RED}Scan failed{Style.RESET_ALL}")
+        print(process.stderr.read())
+    input("Press Enter to continue...")
 
 def Comprehensive_Scan():
     """
@@ -172,7 +159,7 @@ def interface():
         {command_color}P{reset}: Set target port (0 for all ports)    {info_color}Selected Ports = {variable_color}{'all ports' if TARGET_PORT == 0 else TARGET_PORT}{reset}
         {command_color}N{reset}: Set -Pn flag                         {info_color}-Pn = {variable_color}{'True' if PN_FLAG else 'False'}{reset}
         {separator_color}----------------------------------------------------------------------------{reset}
-        {command_color}0{reset}. Exit
+        {command_color}Q{reset}. Exit
         {command_color}1{reset}. Comprehensive Scan
         {command_color}2{reset}. Fast Comprehensive Scan
         {command_color}3{reset}. Stealthy Scan
@@ -194,7 +181,7 @@ def nmap():
             set_port()
         elif option == 'N':
             set_pn_flag()
-        elif option == '0':
+        elif option == 'Q':
             exit()
         elif option == '1':
             Comprehensive_Scan()

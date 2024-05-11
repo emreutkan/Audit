@@ -11,6 +11,7 @@ OPTION_COLOR = Fore.CYAN
 ERROR_COLOR = Fore.RED
 
 # Define the section lists
+
 def main_menu():
     print(f"""{HEADER_COLOR}
     Main Menu

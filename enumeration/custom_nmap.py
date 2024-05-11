@@ -5,11 +5,9 @@ import termios
 from colorama import Fore, Style
 import subprocess
 
-from input_management import validate_ip, getch
-
-from ..terminal_management.tman import clear
-
-from ..input_management import validate_ip
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from terminal_management.tman import clear
+from input_management.validations import validate_ip, validate_port, getch
 
 TARGET_IP = os.popen('hostname -I').read().split()[0]
 VERBOSE = False
@@ -235,21 +233,17 @@ def set_port_range():
     """
     global ALL_PORTS
     global PORT_RANGE
-    print('type all to select all ports')
-    temp_range = input("Enter a port as single integer or port range exactly in this format : 1-65535: ")
-    if 1 <= int(temp_range) <= 65535:
-        PORT_RANGE = temp_range
-        return
-    if temp_range == "all":
+    print("Enter the port or port range (e.g. 1-1000): ")
+    print("Type 0 to scan all ports")
+    port_range = input(" > ")
+    if port_range == "0":
         PORT_RANGE = "1-65535"
-        return
-    if (not 0 <= int(PORT_RANGE.split("-")[0]) <= 65535
-            or not 0 <= int(PORT_RANGE.split("-")[1]) <= 65535
-            and int(PORT_RANGE.split("-")[0]) < int(PORT_RANGE.split("-")[1])):
-        print("Invalid port range")
-        set_port_range()
     else:
-        PORT_RANGE = temp_range
+     if validate_port(port_range):
+        PORT_RANGE = port_range
+     else:
+        print("Invalid port or port range")
+        set_port_range()
 
 
 def make_command():
@@ -273,6 +267,7 @@ def make_command():
 
 def display_interface():
     clear()
+
     # Creating a list of all options
     options = [
         ("I) Target IP", f"{Fore.BLUE}{TARGET_IP}{Style.RESET_ALL}"),
@@ -336,6 +331,7 @@ def display_interface():
 
 # Make sure the 'make_command' and
 def run_nmap():
+    clear()
     command = make_command()
     print(f"Running command: {command}")
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -346,7 +342,8 @@ def run_nmap():
         if output:
             print(output.strip())
     rc = process.poll()
-    return rc
+    print(f"Scan completed with return code: {rc}")
+    input("Press Enter to continue...")
 
 
 def custom_nmap():
@@ -388,6 +385,7 @@ def custom_nmap():
             run_nmap()
         else:
             continue
+
 
 if __name__ == "__main__":
     custom_nmap()

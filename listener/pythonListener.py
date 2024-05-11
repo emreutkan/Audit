@@ -1,5 +1,5 @@
 import socket, sys, time
-
+import subprocess
 def listen(ip,port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((ip, port))
@@ -20,8 +20,11 @@ def listen(ip,port):
 
 
 def start_tcp_listener(host=None, port=None):
+
     if not host or not port:
-        host = input("Enter the host: ")
+        command = 'ip -4 a | grep inet'
+        subprocess.run(command, shell=True, text=True)
+        host = input("\nEnter the host: ")
         port = int(input("Enter the port: "))
     # Create a socket object using TCP/IP protocol
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -1,9 +1,17 @@
-from terminal_management.tman import popen_command_new_terminal
 
+import sys
+import os
+import subprocess
 def nc():
-    port = input("Enter the port number: ")
+    # list all network interface IPs
+    command = 'ip -4 a | grep inet'
+    subprocess.run(command, shell=True, text=True)
+
+    ipaddress = input("\nIP address: ")
+    port = input("Port: ")
     if 1 <= int(port) <= 65535:
-        popen_command_new_terminal(f'nc -lvnp {port}')
+        command = f'sudo nc -lnv {ipaddress} {port}'
+        subprocess.run(command, shell=True, text=True)
     else:
         print("Invalid port number")
 
