@@ -59,3 +59,6 @@ def start_tcp_listener(host=None, port=None):
         client_socket.close()
         server_socket.close()
         print("Server closed.")
+
+if __name__ == '__main__':
+    start_tcp_listener()

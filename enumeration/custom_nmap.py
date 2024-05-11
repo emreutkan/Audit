@@ -5,7 +5,11 @@ import termios
 from colorama import Fore, Style
 import subprocess
 
-from terminal_management.tman import clear
+from input_management import validate_ip, getch
+
+from ..terminal_management.tman import clear
+
+from ..input_management import validate_ip
 
 TARGET_IP = os.popen('hostname -I').read().split()[0]
 VERBOSE = False
@@ -25,77 +29,16 @@ FRAGMENT_PACKETS = False
 TRACEROUTE = False
 
 
-def getch():
-    """Gets a single character from standard input, does not echo to the screen."""
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
-
-
-
-
-
-def toggle_traceroute():
-    """
-    Turn on/off traceroute
-    """
-    global TRACEROUTE
-    TRACEROUTE = not TRACEROUTE
-
-
-def validate_ip(target):
-    """
-    Check if the target IP address is valid
-
-    :param target: target IP address
-    """
-    parts = target.split(".")
-    if len(parts) != 4:
-        return False
-    for part in parts:
-        if not 0 <= int(part) <= 255:
-            return False
-    return True
-def select_target():
-    """
-    Prompt the user to select a target to scan
-
-    :return: the target IP address
-    """
-    global TARGET_IP
-    target = input("Enter the target IP address: ")
-    if validate_ip(target):
-        TARGET_IP = target
-        return TARGET_IP
-    else:
-        print("Invalid IP address")
-        select_target()
-
-def select_interface():
-    """
-    Prompt the user to select an interface to use
-
-    :return: the interface to use
-    """
-    global INTERFACE
-    interfaces = subprocess.run("ifconfig | grep -o '^[a-zA-Z0-9]*'", shell=True, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, text=True)
-    print(interfaces.stdout.split())
-    interface = input("Enter the interface: ")
-    clear()
-    if interface not in interfaces.stdout.split():
-        print("Invalid interface")
-        select_interface()
-    if not interface:
-        print("Invalid interface")
-        select_interface()
-    INTERFACE = interface
-    return INTERFACE
+# def getch():
+#     """Gets a single character from standard input, does not echo to the screen."""
+#     fd = sys.stdin.fileno()
+#     old_settings = termios.tcgetattr(fd)
+#     try:
+#         tty.setraw(sys.stdin.fileno())
+#         ch = sys.stdin.read(1)
+#     finally:
+#         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+#     return ch
 
 
 def toggle_interface():
@@ -156,6 +99,14 @@ def set_timing():
         set_timing()
 
 
+def toggle_traceroute():
+    """
+    Turn on/off traceroute
+    """
+    global TRACEROUTE
+    TRACEROUTE = not TRACEROUTE
+
+
 def toggle_spoof_mac():
     """
     Turn on/off MAC address spoofing
@@ -167,29 +118,6 @@ def toggle_spoof_mac():
     SPOOF_MAC = not SPOOF_MAC
     if SPOOF_MAC:
         DECOY_SCAN = False
-
-
-def set_port_range():
-    """
-    Set the port range for the scan
-    """
-    global ALL_PORTS
-    global PORT_RANGE
-    print('type all to select all ports')
-    temp_range = input("Enter a port as single integer or port range exactly in this format : 1-65535: ")
-    if 1 <= int(temp_range) <= 65535:
-        PORT_RANGE = temp_range
-        return
-    if temp_range == "all":
-        PORT_RANGE = "1-65535"
-        return
-    if (not 0 <= int(PORT_RANGE.split("-")[0]) <= 65535
-            or not 0 <= int(PORT_RANGE.split("-")[1]) <= 65535
-            and int(PORT_RANGE.split("-")[0]) < int(PORT_RANGE.split("-")[1])):
-        print("Invalid port range")
-        set_port_range()
-    else:
-        PORT_RANGE = temp_range
 
 
 def toggle_ping_scan():
@@ -248,6 +176,80 @@ def toggle_decoy_scan():
     if DECOY_SCAN:
         SPOOF_MAC = False
         set_decoy_count()
+
+
+# def validate_ip(target):
+#     """
+#     Check if the target IP address is valid
+#
+#     :param target: target IP address
+#     """
+#     parts = target.split(".")
+#     if len(parts) != 4:
+#         return False
+#     for part in parts:
+#         if not 0 <= int(part) <= 255:
+#             return False
+#     return True
+def select_target():
+    """
+    Prompt the user to select a target to scan
+
+    :return: the target IP address
+    """
+    global TARGET_IP
+    target = input("Enter the target IP address: ")
+    if validate_ip(target):
+        TARGET_IP = target
+        return TARGET_IP
+    else:
+        print("Invalid IP address")
+        select_target()
+
+
+def select_interface():
+    """
+    Prompt the user to select an interface to use
+
+    :return: the interface to use
+    """
+    global INTERFACE
+    interfaces = subprocess.run("ifconfig | grep -o '^[a-zA-Z0-9]*'", shell=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, text=True)
+    print(interfaces.stdout.split())
+    interface = input("Enter the interface: ")
+    clear()
+    if interface not in interfaces.stdout.split():
+        print("Invalid interface")
+        select_interface()
+    if not interface:
+        print("Invalid interface")
+        select_interface()
+    INTERFACE = interface
+    return INTERFACE
+
+
+def set_port_range():
+    """
+    Set the port range for the scan
+    """
+    global ALL_PORTS
+    global PORT_RANGE
+    print('type all to select all ports')
+    temp_range = input("Enter a port as single integer or port range exactly in this format : 1-65535: ")
+    if 1 <= int(temp_range) <= 65535:
+        PORT_RANGE = temp_range
+        return
+    if temp_range == "all":
+        PORT_RANGE = "1-65535"
+        return
+    if (not 0 <= int(PORT_RANGE.split("-")[0]) <= 65535
+            or not 0 <= int(PORT_RANGE.split("-")[1]) <= 65535
+            and int(PORT_RANGE.split("-")[0]) < int(PORT_RANGE.split("-")[1])):
+        print("Invalid port range")
+        set_port_range()
+    else:
+        PORT_RANGE = temp_range
 
 
 def make_command():
@@ -346,6 +348,7 @@ def run_nmap():
     rc = process.poll()
     return rc
 
+
 def custom_nmap():
     while True:
         display_interface()
@@ -386,13 +389,5 @@ def custom_nmap():
         else:
             continue
 
-
-def main():
-    custom_nmap()
-
 if __name__ == "__main__":
-    main()
-
-""" ADD
-    -sS: Conducts a SYN stealth scan, which is less likely to be logged.
-"""
+    custom_nmap()

