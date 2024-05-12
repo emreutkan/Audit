@@ -87,3 +87,4 @@ def encrypt_payload(payload_file_path=None):
 
     clear()
     print(f'Encrypted payload created at {color.bright_green(encrypted_file_address)}')
+    return encrypted_file_address

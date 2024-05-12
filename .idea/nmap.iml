@@ -8,4 +8,7 @@
     <orderEntry type="jdk" jdkName="Python 3.10.12 WSL (Ubuntu): (/home/ubuntu/.virtualenvs/nmap/bin/python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PackageRequirementsSettings">
+    <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
+  </component>
 </module>
